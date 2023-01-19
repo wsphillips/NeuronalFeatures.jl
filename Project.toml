@@ -1,0 +1,4 @@
+name = "NeuronalFeatures"
+uuid = "3e8270bd-67a3-488e-bf2c-2d60cb84b399"
+authors = ["Wiktor Phillips <wsphillips@gmail.com>"]
+version = "0.1.0"
