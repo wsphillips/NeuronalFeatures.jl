@@ -1,4 +1,4 @@
-module NeuroFeatures
+module NeuronalFeatures
 
 export findthreshold, findbursts, findmaskedthreshold
 
@@ -47,4 +47,4 @@ periods(burst_durations, burst_ends) = burst_durs[1:end-1] + (burst_ends[2:end] 
 frequency(burst_period) = inv(burst_period)
 duty_cycle(burst_duration, burst_period) = burst_duration/burst_period
 
-end # module NeuroFeatures
+end # module NeuronalFeatures

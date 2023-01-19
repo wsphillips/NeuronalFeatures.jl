@@ -1,5 +1,5 @@
 
-using Test, NeuroFeatures, Serialization, Plots
+using Test, NeuronalFeatures, Serialization, Plots
 
 @testset "Neuron Features" begin
     
