@@ -42,6 +42,19 @@ function findbursts(s, delta)
     return bs, be
 end
 
+function findlags(s, V, t, lthold)
+    lag_indexes = findthreshold(V, lthold, -1)
+    start_off = first(s) > first(lag_indexes)
+    end_off = last(s) > last(lag_indexes)
+    if length(lag_indexes) == length(s) && !(start_off || end_off)
+        return t[s] - t[lag_indexes]
+    else
+        s_adj = s[begin:end-end_off] 
+        l_adj = lag_indexes[begin+start_off:end]
+        return t[s_adj] - t[l_adj]
+    end
+end
+
 duration(burst_start, burst_end) = burst_end - burst_start
 periods(burst_durations, burst_ends) = burst_durs[1:end-1] + (burst_ends[2:end] - burst_ends[1:end-1])
 frequency(burst_period) = inv(burst_period)
