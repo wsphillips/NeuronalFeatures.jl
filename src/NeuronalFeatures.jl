@@ -1,7 +1,7 @@
 module NeuronalFeatures
 
-export findthreshold, findbursts, findmaskedthreshold
-
+export findthreshold, findbursts, findmaskedthreshold, findlags
+export duration, periods, duty_cycle, frequency
 function findthreshold(V::Vector{<:Real}, Vth::Real, direction::Int = 0)
     indexes = Vector{Int64}()
     nprev = zero(Vth)
@@ -56,7 +56,7 @@ function findlags(s, V, t, lthold)
 end
 
 duration(burst_start, burst_end) = burst_end - burst_start
-periods(burst_durations, burst_ends) = burst_durs[1:end-1] + (burst_ends[2:end] - burst_ends[1:end-1])
+periods(burst_durs, burst_ends) = burst_durs[1:end-1] + (burst_ends[2:end] - burst_ends[1:end-1])
 frequency(burst_period) = inv(burst_period)
 duty_cycle(burst_duration, burst_period) = burst_duration/burst_period
 
