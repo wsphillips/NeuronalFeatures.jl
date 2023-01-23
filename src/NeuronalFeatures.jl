@@ -47,17 +47,35 @@ function findlags(s, V, t, lthold)
     start_off = first(s) > first(lag_indexes)
     end_off = last(s) > last(lag_indexes)
     if length(lag_indexes) == length(s) && !(start_off || end_off)
-        return t[s] - t[lag_indexes]
+        return t[lag_indexes] - t[s]
     else
         s_adj = s[begin:end-end_off] 
         l_adj = lag_indexes[begin+start_off:end]
-        return t[s_adj] - t[l_adj]
+        if length(l_adj) == length(s_adj)
+            return t[l_adj] - t[s_adj]
+        else
+            return 1e6
+        end
     end
 end
 
 duration(burst_start, burst_end) = burst_end - burst_start
 periods(burst_durs, burst_ends) = burst_durs[1:end-1] + (burst_ends[2:end] - burst_ends[1:end-1])
-frequency(burst_period) = inv(burst_period)
 duty_cycle(burst_duration, burst_period) = burst_duration/burst_period
+
+function burst_frequency(t, V)
+    s = findthreshold(V, -20.0, 1)
+    spike_times = t[s]
+    bs, be = findbursts(spike_times, 100.0)
+    mean_period = mean(bs[2:end] - bs[1:end-1])
+    return inv(mean_period)
+end
+
+function duty_cycle(t, V)
+    s = findthreshold(V, -20.0, 1)
+    spike_times = t[s]
+    bs, be = findbursts(spike_times, 100.0)
+    return mean(be - be)
+end
 
 end # module NeuronalFeatures
