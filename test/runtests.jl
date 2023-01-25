@@ -1,5 +1,6 @@
 
-using Test, NeuronalFeatures, Serialization, Plots
+using Test, NeuronalFeatures
+# using Serialization, Plots
 
 @testset "Neuron Features" begin
     
@@ -22,22 +23,21 @@ using Test, NeuronalFeatures, Serialization, Plots
     data = deserialize(joinpath(@__DIR__, "../assets/stg_example.data"))
     data_t = data[:,1]
     data_Vm = data[:,2]
-    ap_idxs = findthreshold(data_Vm, 10.0, 1)
-    ap_times = data_t[ap_idxs]
+    ap_times = spiketimes(data_t, data_Vm)
     
-    @test length(ap_idxs) == 64
+    @test length(ap_times) == 64
     @test ap_times ≈ deserialize(joinpath(@__DIR__, "../assets/stg_aptimes.data"))
 
     # To check visually:
 
-    # markers = fill(10.0, size(ap_idxs))
-    # plot(data_t, data_Vm)
-    # scatter!(ap_times, markers)
+    #markers = fill(-20.0, size(ap_times))
+    #plot(data_t, data_Vm)
+    #scatter!(ap_times, markers)
     
     δ = 100.0 # interspike interval for bursts
-    bs, be = findbursts(ap_times, δ) # returns timestamps of burst begin and burst ending
+    bursts = findbursts(ap_times, δ) # returns timestamps of burst begin and burst ending
     # vline!(x) for bs and be OR vspan!(x) where spans are drawn between each consecutive pair
-    @test length(bs) == 6 && length(be) == 6
+    @test length(bursts) == 6 && length(be) == 6
     
     #bursts = zeros(length(bs) + length(be))
     #bursts[1:2:end] = bs

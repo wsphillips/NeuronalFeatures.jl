@@ -2,3 +2,6 @@ name = "NeuronalFeatures"
 uuid = "3e8270bd-67a3-488e-bf2c-2d60cb84b399"
 authors = ["Wiktor Phillips <wsphillips@gmail.com>"]
 version = "0.1.0"
+
+[deps]
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"

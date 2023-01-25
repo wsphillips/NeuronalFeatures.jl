@@ -1,7 +1,10 @@
 module NeuronalFeatures
 
-export findthreshold, findbursts, findmaskedthreshold, findlags
-export duration, periods, duty_cycle, frequency
+using Statistics
+
+export findthreshold, findbursts, findmaskedthreshold, findlags, spiketimes
+export burst_duration, burst_period, duty_cycle, burst_frequency
+
 function findthreshold(V::Vector{<:Real}, Vth::Real, direction::Int = 0)
     indexes = Vector{Int64}()
     nprev = zero(Vth)
@@ -28,7 +31,9 @@ function findmaskedthreshold(spans, t, V, Vth, direction::Int = 0)
     return s
 end
 
-function findbursts(s, delta)
+# Maybe better if we discard unmatched burst start/ends instead of using boundary fallback?
+function findbursts(s, delta = 100.0)
+    isempty(s) && return []
     bs = Vector{eltype(s)}() # burst starts
     be = Vector{eltype(s)}() # burst ends
     for i in eachindex(s)
@@ -39,43 +44,71 @@ function findbursts(s, delta)
             push!(be, s[i])
         end
     end
-    return bs, be
+    return collect(zip(bs, be))
 end
 
-function findlags(s, V, t, lthold)
-    lag_indexes = findthreshold(V, lthold, -1)
-    start_off = first(s) > first(lag_indexes)
-    end_off = last(s) > last(lag_indexes)
-    if length(lag_indexes) == length(s) && !(start_off || end_off)
-        return t[lag_indexes] - t[s]
+function findlags(t, V, st, lthold = -35.0)
+    lag_times = t[findthreshold(V, lthold, -1)]
+    start_off = first(st) > first(lag_times)
+    end_off = last(st) > last(lag_times)
+    if length(lag_times) == length(st) && !(start_off || end_off)
+        return lag_times - st
     else
-        s_adj = s[begin:end-end_off] 
-        l_adj = lag_indexes[begin+start_off:end]
+        s_adj = st[begin:end-end_off] 
+        l_adj = lag_times[begin+start_off:end]
         if length(l_adj) == length(s_adj)
             return t[l_adj] - t[s_adj]
         else
-            return 1e6
+            return 1e6 # FIXME: this is a hack/placeholder, we need something else here
         end
     end
 end
 
-duration(burst_start, burst_end) = burst_end - burst_start
-periods(burst_durs, burst_ends) = burst_durs[1:end-1] + (burst_ends[2:end] - burst_ends[1:end-1])
-duty_cycle(burst_duration, burst_period) = burst_duration/burst_period
+#function findlags(t, V, lthold = -35.0)
+#    st = spiketimes(t, V)
+#    return findlags(t, V, st, lthold)
+#end
+
+function spiketimes(t, V, thold = -20.0)
+    s = findthreshold(V, thold, 1)
+    return t[s]
+end
+
+function burst_duration(bursts)
+    isempty(bursts) && return 0.0
+    mean(burst[end] - burst[begin] for burst in bursts)
+end
+
+function burst_duration(t, V) 
+    st = spiketimes(t, V)
+    bursts = findbursts(spike_times, 100.0)
+    return burst_duration(bursts)
+end
+
+function burst_period(bursts)
+    length(bursts) < 2 && return Inf
+    mean(bursts[i+1][begin] - bursts[i][begin] for i in 1:length(bursts)-1)
+end
+
+function burst_period(t, V)
+    st = spiketimes(t, V)
+    bursts = findbursts(spike_times, 100.0)
+    return burst_period(bursts)
+end
 
 function burst_frequency(t, V)
-    s = findthreshold(V, -20.0, 1)
-    spike_times = t[s]
-    bs, be = findbursts(spike_times, 100.0)
-    mean_period = mean(bs[2:end] - bs[1:end-1])
-    return inv(mean_period)
+    p = burst_period(t,V)
+    p == Inf && return 0.0
+    return inv(p)
 end
 
-function duty_cycle(t, V)
-    s = findthreshold(V, -20.0, 1)
-    spike_times = t[s]
-    bs, be = findbursts(spike_times, 100.0)
-    return mean(be - be)
+function burst_frequency(bursts)
+    p = burst_period(bursts)
+    p == Inf && return 0.0
+    return inv(p)
 end
+
+duty_cycle(t, V) = burst_duration(t, V)/burst_period(t, V)
+duty_cycle(bursts) = burst_duration(bursts)/burst_period(bursts)
 
 end # module NeuronalFeatures
